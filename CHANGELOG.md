@@ -71,6 +71,9 @@ Please see the [Envoy documentation](https://www.envoyproxy.io/docs/envoy/latest
 
 - Bugfix: Fix an issue that caused Dev Portal to sporadically respond with upstream connect timeout when loading content
 - Bugfix: Prevent potential reconcile loop when updating the status of an Ingress.
+- Bugfix: Make Knative paths match on prefix instead of the entire path to better align to the Knative specification ([#3224]).
+
+[#3224]: https://github.com/datawire/ambassador/issues/3224
 
 ## [1.11.1] February 04, 2021
 [1.11.1]: https://github.com/datawire/ambassador/compare/v1.11.0...v1.11.1

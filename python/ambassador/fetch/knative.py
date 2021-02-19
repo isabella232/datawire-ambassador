@@ -72,11 +72,29 @@ class KnativeIngressProcessor (ManagedKubernetesProcessor):
                 headers = split.get('appendHeaders', {})
                 headers = {**global_headers, **headers}
 
+                # Per the Knative Ingress specification, paths are supposed to
+                # be extended POSIX regexes. Knative Ingress paths always match
+                # on prefixes, while using prefix_regex in Ambassador requires a
+                # match against the entire path. Therefore, we always add .* to
+                # the end of the regex to convert it from the specified prefix
+                # match.
+                #
+                # This (perhaps surprisingly?) still works even if you anchor a
+                # path with $ in the Knative configuration. In other words,
+                # under Envoy/C++'s regex pattern rules, "/foo$.*" seems to be
+                # equivalent to "/foo$" (and other variations hold as well, such
+                # as "/foo(/bar/|$).*").
+                #
+                # See
+                # https://github.com/knative/networking/blob/dcc87449375674db755c01f1d8a9688c12a0fb42/pkg/apis/networking/v1alpha1/ingress_types.go#L212-L220.
+                path_regex = path.get('path', '/')
+                path_regex += '.*'
+
                 split_mapping_specs.append({
                     'service': f"{service_name}.{service_namespace}:{service_port}",
                     'add_request_headers': headers,
                     'weight': split.get('percent', 100),
-                    'prefix': path.get('path', '/'),
+                    'prefix': path_regex,
                     'prefix_regex': True,
                     'timeout_ms': int(durationpy.from_str(path.get('timeout', '15s')).total_seconds() * 1000),
                 })
